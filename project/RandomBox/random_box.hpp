@@ -126,6 +126,9 @@ void get_2points(iVec2& p1, iVec2& p2, bool& bControl,const fVec2& mouse, short 
 
 }
 
+
+
+// principal game:
 int game(int W, int H, int fw, int fh, int background_color = color::Blue) {
 
 
@@ -166,6 +169,8 @@ int game(int W, int H, int fw, int fh, int background_color = color::Blue) {
 	fVec2			 mouse;
 	iVec2			 p1{};
 	iVec2			 p2{};
+	iVec2			 pp1{};
+	iVec2			 pp2{};
 
 	while (konsole->is_open()) {
 
@@ -189,7 +194,7 @@ int game(int W, int H, int fw, int fh, int background_color = color::Blue) {
 		if (KeyReleased(_u('D'))) {
 			if (p1 != p2) {
 				auto p = p1 - iVec2(1, 1);
-				vec.push_back(make_box(p.as<float>(), p2.as<float>(), color::White));
+				vec.push_back(make_box(p.as<float>(), pp2.as<float>(), color::White));
 				p1 = p2;
 			}
 		}
@@ -219,9 +224,11 @@ int game(int W, int H, int fw, int fh, int background_color = color::Blue) {
 		if (!b_select) {
 			Mode = L"CREATION";
 			get_2points(p1, p2, b_On, mouse, VK_LBUTTON);
+			pp1 = p1 - iVec2(1, 1);
+			pp2 = p2 + iVec2(1, 1);
 		}
 
-		Draw::border_box(console::Hborder, p1, p2, color::White, background_color);
+		Draw::border_box(console::Hborder, p1, pp2, color::White, background_color);
 
 		// add collision
 		// TODO : NEED TO UPDATE get_bounds() functions to get right rectangle
