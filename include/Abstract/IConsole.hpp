@@ -14,8 +14,10 @@ namespace abstract {
 	class IConsole {
 
 	public:
+		// construction of console for letter 
 		virtual int construct(int, int, int, int) = 0;
 		virtual int is_open() const = 0;
+		virtual int clear() = 0;
 		virtual int display() = 0;
 		virtual bool pull_event() = 0;
 		virtual bool wait_event() = 0;
