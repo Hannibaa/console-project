@@ -1,7 +1,6 @@
 /*										Utility Console								*/
 #pragma once
 
-
 #include <iostream>
 #include <vector>
 #include <sstream>
@@ -9,6 +8,8 @@
 #include <tuple>
 #include <array>
 #include <utility>
+#include <iomanip>
+#include <ctime>
 #include <include/console/ka_color.hpp>
 #include <include/time/Game_timer.h>
 #include <include/console/ka_console.hpp>
@@ -22,6 +23,7 @@
 #define PRINT_TITLE(format, ... )     swprintf_s(console::title, MAX_CHAR_TITLE - 1, format , __VA_ARGS__); \
                                       TITLE(console::title)
 
+#define ka_towstr(token)				  std::to_wstring(token)				  
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 
@@ -93,14 +95,9 @@ namespace console {
 	};
 
 	
-	
-	
-
-
-	
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 
-//				MENU UTILITY    
+//				Maximum and Minimum    
 // 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 	template<typename T>
@@ -116,6 +113,36 @@ namespace console {
 	}
 
 	
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 
+//    Date and Current Time system
+// 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	////////////////////////////////////////// Extract Date and Time System //////////////////////
+	std::string make_daytime_string_s() {
+		time_t now = time(nullptr);
+		char buf[256];
+		ctime_s(buf, 256, &now);
+		return buf;
+	}
+
+	std::wstring make_daytime_wstring() {
+		std::string time_ = make_daytime_string_s();
+		std::wstring wstr = std::wstring(time_.begin(), time_.end());
+		wstr.pop_back();
+		return wstr;
+	}
+
+	std::wstring make_current_date() {
+		auto stime = make_daytime_wstring();
+		return stime.substr(0, 10) + stime.substr(19);
+	}
+
+	std::wstring make_current_time() {
+		auto stime = make_daytime_wstring();
+		return stime.substr(11, 8);
+	}
 
 
 }// namespace console
