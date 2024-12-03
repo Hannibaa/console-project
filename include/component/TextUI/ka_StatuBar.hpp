@@ -19,19 +19,20 @@ namespace TextUI {
 	) 
 	{
 
-		konsole->draw(x, y, wstr[0], color_firstchar | colorbg);
+		konsole->draw(x, y, wstr[0], color_firstchar | colorbg << 4);
 		for (int i = 1; i < wstr.size(); ++i)
-			konsole->draw(x + i, y, wstr[i], colorfg | colorbg);
+			konsole->draw(x + i, y, wstr[i], colorfg | colorbg << 4);
 	}
 
 
 	void StatuBar(int x, int y,						// coordinate where we put bar sub menu
 		int step,									// step between items
-		const std::vector<std::wstring>& vItems, 	// items in form of string 
+		const std::vector<std::wstring>& vItems, 	// items in form of n  string 
 		int colorfg, 								// general foreground color
 		int colorbg,								// general background color
 		int firstCharColor,							// first char color foreground
-		int first_step = 1							// first step space
+		int first_step = 0	,						// first step space
+		int color_string_bg = color::Black			// color background for strings
 	)
 	{
 		// using background black :
@@ -39,11 +40,11 @@ namespace TextUI {
 		int hight = konsole->hight();
 		int l{ first_step };
 
-		Draw::box(x, y, width, 1, colorfg, colorbg);
+		Draw::box(x, y, width, 1, colorfg, colorbg << 4);
 
 		for (const auto& str : vItems)
 		{
-			draw_string_menu(x + l, y, str, colorfg, COLOR::BG_BLACK, firstCharColor);
+			draw_string_menu(x + l, y, str, colorfg, color_string_bg, firstCharColor);
 			l += str.size() + step;
 			if (l > width) break;
 		}
@@ -52,9 +53,26 @@ namespace TextUI {
 	
 	using strVectorBuilder = console::VectorBuilder<std::wstring>;
 
+	void StatuBar(const std::vector<std::wstring> items,
+		int level,
+		int first_step = 0,
+		int steps = 2,
+		int color_bg = color::YellowLight,
+		int color_fg = color::Yellow,
+		int color_bg_strings = color::Black,
+		int color_firstChar = color::RedLight
+	) 
+	{
+		auto Hight = konsole->hight();
+		StatuBar(0, Hight - level, steps, items, color_fg, color_bg, color_firstChar,
+			first_step, color_bg_strings);
+	}
+
+
+	// don't use this function
 	void StatuBar(const std::vector<std::wstring>& items, int index = 1) {
 		auto Hight = konsole->hight();
-		StatuBar(0, Hight - index, 3, items, COLOR::FG_YELLOW, COLOR::FG_DARK_YELLOW << 4, COLOR::FG_RED);
+		StatuBar(0, Hight - index, 3, items, color::YellowLight, color::Yellow, color::RedLight);
 
 	}
 
@@ -77,6 +95,7 @@ namespace TextUI {
 		int color_fg;
 		int color_bg;
 		int color_firstChar;
+		int color_string_bg;
 	};
 
 
@@ -125,6 +144,11 @@ namespace TextUI {
 			return *this;
 		}
 
+		StatuBarBuilder& set_colorbg_string(int col) {
+			_statuBar.color_string_bg = col;
+			return *this;
+		}
+
 		sStatuBar get() const {
 			return std::move(_statuBar);
 		}
@@ -133,7 +157,8 @@ namespace TextUI {
 
 	void StatuBar(const sStatuBar& statuBar) {
 		StatuBar(statuBar.x, statuBar.y, statuBar.step, statuBar.vItems,
-			statuBar.color_fg, statuBar.color_bg, statuBar.color_firstChar, statuBar.first_step);
+			statuBar.color_fg, statuBar.color_bg, statuBar.color_firstChar,
+			statuBar.first_step, statuBar.color_string_bg);
 	}
 
 }
