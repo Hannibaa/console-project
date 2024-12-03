@@ -77,18 +77,6 @@ Character Set -> Use Unicode. Thanks! - Javidx9
 
 namespace console {
 
-    ////////////////////////////////////////// Extract Date and Time System //////////////////////
-	std::string make_daytime_string_s() {
-		time_t now = time(nullptr);
-		char buf[256];
-		ctime_s(buf, 256, &now);
-		return buf;
-	}
-
-    std::wstring make_daytime_wstring() {
-        std::string time_ = make_daytime_string_s();
-        return std::wstring(time_.begin(), time_.end());
-    }
 
     typedef    CHAR_INFO   gchar;
 
