@@ -53,9 +53,6 @@ namespace console{
 
         IColorString() {}
 
-        //IColorString(std::basic_string_view<TChar> str)
-        //    :IColorString(std::basic_string<TChar>(str), std::vector<int>{})
-        //{}
 
         IColorString(const std::basic_string<TChar>& str)
             :IColorString(str, std::vector<int>{})
@@ -103,11 +100,11 @@ namespace console{
         }
 
         void color_fg(size_t pos, int color) {
-            this->at(pos).Attributes = color;
+            this->at(pos).Attributes = (this->at(pos).Attributes & 0xF0) | color;
         }
 
         void color_bg(size_t pos, int color) {
-            this->at(pos).Attributes = color << 4;
+            this->at(pos).Attributes = (this->at(pos).Attributes & 0x0F) | (color << 4);
         }
 
         std::vector<int> color_fg() const {
@@ -155,6 +152,7 @@ namespace console{
         }
         
         virtual ~IColorString() = default;
+
     protected:
 
         // set string with vector of colors
@@ -173,7 +171,7 @@ namespace console{
                 this->push_back(gc);
             }
         }
-   
+
     private:
 
         void extract_color(std::vector<int>& colors, int(*f)(int)) {
