@@ -2,8 +2,16 @@
 /*
 8888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888
 									This file discrib the Kenimatic of points and body 
+									Only Base Class represented
+
 									Author : Kadda Aoues
 									Date	: 18 / 10 /2024
+
+									Contents :
+									IIKinematic < Vector, Space, T> interface
+									IKinematic that implimentation of functions
+									IMove<Movable> : IKinematic  interface
+
 8888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888
 */
 
