@@ -3,7 +3,6 @@
 #include <console project/console/ka_utility.hpp>
 #include <console project/basic/ka_IColorString.hpp>
 #include <console project/basic/ka_Transformable.hpp>
-#include <console project/basic/ka_IPrintable.hpp>
 
 
 

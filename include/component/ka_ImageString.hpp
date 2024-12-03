@@ -40,8 +40,19 @@ namespace console {
 		}
 
 		void set_size(int lx, int ly) {
-			_lx = lx;
-			_ly = ly;
+			if (this->size() < 2) {
+				_lx = 1; _ly = 1;
+			}
+			else if (this->size() < lx * ly) {
+				_lx = this->size();
+				_ly = 1;
+			}
+			else
+			{
+				_lx = lx;
+				_ly = ly;
+			}
+			
 		}
 
 
@@ -55,8 +66,10 @@ namespace console {
 
 			for (int i = 0; i < _lx; ++i)
 				for (int j = 0; j < _ly; ++j)
-				konsole->draw(p.x + i, p.y + j, 
-					this->operator[](j*_lx + i).Char, this->operator[](j*_lx + i).Attributes);
+				{
+					konsole->draw(p.x + i, p.y + j,
+						this->operator[](j* _lx + i).Char, this->operator[](j* _lx + i).Attributes);
+				}
 		}
 
 		fVec2 get_dimension() const override {
@@ -65,7 +78,7 @@ namespace console {
 
 		fRect get_bounds() const {
 			fVec2 p = this->get_position();
-			return fRect(p.x, p.y, _lx, _ly);
+			return fRect(p.x - 1.f, p.y - 1.f, _lx, _ly);
 		}
 	};
 

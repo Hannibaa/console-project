@@ -14,18 +14,19 @@
 
 
 
-namespace console {
+namespace TextUI {
 
 	template<typename Tchar>
-	class SString : public std::basic_string<Tchar>, public IDrawable, public ITransformable<float>
+	class SString : public std::basic_string<Tchar>, public console::IDrawable, 
+		public console::ITransformable<float>
 	{
-		int				_colorbg;
-		int				_colorfg;
-		int				_Color0BG;
-		int				_Color0FG;
+		int				_colorbg;                 //  
+		int				_colorfg;				  // 
+		int				_Color0BG;				  // initial background color
+		int				_Color0FG;				  // initial foreground color
 
 	public:
-		using std::basic_string<Tchar>::basic_string;
+		//using std::basic_string<Tchar>::basic_string;
 
 		SString(const std::basic_string<Tchar>& image, iVec2 colors)
 		{
@@ -80,5 +81,44 @@ namespace console {
 
 }
 
-using WSString = console::SString<wchar_t>;
-using SString = console::SString<char>;
+using WSString = TextUI::SString<wchar_t>;
+using SString = TextUI::SString<char>;
+
+
+namespace TextUI {
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 
+//    Builder for SString:    
+// 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	template<typename Tchar>
+	class SStringBuilder {
+	protected:
+		SString<Tchar>  Str;
+
+	public:
+
+		SStringBuilder& set_string(const std::basic_string<Tchar>& _string)
+		{
+			Str.assign(_string);
+			return *this;
+		}
+
+		SStringBuilder& set_colorBG(int color) {
+			Str.set_colorBG(color);
+			return *this;
+		}
+
+		SStringBuilder& set_colorFG(int color) {
+			Str.set_colorFG(color);
+			return *this;
+		}
+
+		SStringBuilder& set_position(int x, int y) {
+			Str.set_position(x, y);
+			return *this;
+		}
+	};
+}
