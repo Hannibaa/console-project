@@ -1,5 +1,32 @@
-﻿#pragma once
+﻿/*
+*				Box creation program
+*				Name :		Box Creation Ascii mode
+*				Author :	Kadda Aoues
+*				Date :		12 / 4 / 2024
+*				Statu :		On Development 
+*				Version :	Not set yet
+*				Copyright :	Not yet
+* 
+*				Discription : 
+*				
+*				TODO : 
+*				------
+*						1. in Delete optoin we have problem in increment of iterator
+*						2. Need new option for resizing box
+*						3. Need new option for creating box empty and full of maters
+*						4. Need New option for coloring the boxes foreground color and 
+*						   background color
+*						5. Need new option for chosing between diffirent object like 
+*						   line, box, square, ...
+*						6. New new option to send text command from keyboard so 
+*							6.1 new function to perse word text command
+*							6.2 new function to chose option from word persed
+*							6.3 new executor function for these option.
+*/
+
+#pragma once
 #include <vector>
+#include <list>
 #include <map>
 #include <include/random/random_generator.h>
 #include <include/console/ka_utility.hpp>
@@ -25,14 +52,14 @@ using Option = std::map<std::string, Coption>;
 using Sprite = console::SpriteString<wchar_t>;
 
 // using vector of sprite
-using vecSprite = std::vector<Sprite>;
+using listSprite = std::list<Sprite>;
 
 using strButton = WSString;
 using vecString = std::vector<std::wstring>;
 // ID for all object sprite
 int ID{};
 
-// Function to make box string represented lx and ly dimension.
+// Function : to make box string represented lx and ly dimension.
 std::wstring make_box_string(int lx, int ly, const wchar_t (&border)[6] ) {
 
 	if (lx == 1 && ly == 1) return std::wstring(1, 0x2588);
@@ -65,6 +92,7 @@ std::wstring make_box_string(int lx, int ly, const wchar_t (&border)[6] ) {
 	return str;
 }
 
+// Function : make random box in sprite
 Sprite make_random_box( int W, int H, int rx, int ry)
 {
 	Sprite sp;
@@ -84,14 +112,12 @@ Sprite make_random_box( int W, int H, int rx, int ry)
 	return sp;
 }
 
+// Function : make box between two point p1 and p2
 Sprite make_box(const fVec2& p1, const fVec2& p2, int _col = 0) {
 	Sprite sp;
 
 	int lx = std::abs(p1.x - p2.x);
 	int ly = std::abs(p1.y - p2.y);
-
-	//int x = p1.x > p2.x ? p1.x : p2.x;
-	//int y = p1.y > p2.y ? p1.y : p2.y;
 
 	sp.set_string(make_box_string(lx, ly, console::Hborder));
 	sp.set_size(lx, ly);
@@ -118,15 +144,39 @@ void get_2points(iVec2& p1, iVec2& p2, bool& bControl,const fVec2& mouse, short 
 
 }
 
+template<typename T>
+requires std::is_arithmetic_v<T> // or is stringable ro buffered or have << operator
+void show_selected_vector(const std::vector<T>& vec, std::wstring& wout)
+{
+	std::wstringstream wss;
 
+	for (const auto& e : vec) wss << e << " ,";
+
+	wout = wss.str();
+	if(!wout.empty())
+	wout.pop_back();
+}
+
+
+// Function : display comment of command or option 
+void display_comment(bool& bControl, Coption option, std::wstring& comment)
+{
+	bControl = true;
+	if (bControl && option.action)
+	{
+		comment = option.comment;
+		bControl = false;
+	}
+}
 
 // principal game:
 int game(int W, int H, int fw, int fh, int background_color = color::Blue) {
 
 	// this for statu bar
 	int level = 2;
+	// application name 
 	const wchar_t* APP_TITLE = L"Random Box";
-
+	// console window set up
 	konsole->construct_console(W, H, fw, fh);
 	konsole->set_background_color(background_color << 4);
 	konsole->set_drawWindows(0, 0, W, H - level);
@@ -135,28 +185,30 @@ int game(int W, int H, int fw, int fh, int background_color = color::Blue) {
 	win::move_console_window(50, 50);
 
 	/// ------------------- 0. Option
+	bool				bControl{ false };
+	std::wstring		comment;
+	Option				option;
+#define  _DISPLAY_COMMENT(option_name)	display_comment(bControl,option[#option_name], comment)
 
-	Option  option;
-
-	option["Time"] = { false, L"show current time" };
-	option["Date"] = { false, L"show today date" };
-	option["Cursor"] = { false, L"show cursor coordinate" };
-	option["Keyboard"] = { false, L"show key clicked" };
-	option["Type"] = { false, L"show taping word, use space to delate" };
-	option["Select"] = { false, L"select an object by mouse" };
-	option["Add"] = { false, L"add an object to a vector" };
-	option["Draw"] = { false, L"Enable drawing" };
+	option["Time"]		= { false, L"show current time" };
+	option["Date"]		= { false, L"show today date" };
+	option["Cursor"]	= { false, L"show cursor coordinate" };
+	option["Keyboard"]	= { false, L"show key clicked" };
+	option["Type"]		= { false, L"show taping word, use space to delate" };
+	option["Select"]	= { false, L"select an object by mouse" };
+	option["Add"]		= { false, L"add an object to a vector" };
+	option["Draw"]		= { false, L"Enable drawing" };
 	option["Collision"] = { false, L"Activate collision mode" };
+	option["Delete"]	= { false, L"Delete mode to delete object" };
 
 	/// ------------------- 1. Data
 
-	int lx{6};
-	int ly{3};
-	fVec2 p0(40.f, 10.f);
-	bool b_On;	
-	
-	vecSprite  vec;
-	
+	int						lx{6};
+	int						ly{3};
+	fVec2					p0(40.f, 10.f);
+	bool					b_On;	
+	// boxes sprite in list vector
+	listSprite				vec;
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// 
@@ -175,7 +227,10 @@ int game(int W, int H, int fw, int fh, int background_color = color::Blue) {
 	const size_t	 MAX_STRING_SIZE = 14;
 	int				 count{};
 	int				 _id{};
-	std::wstring strword(10, L' ');
+	std::wstring	strword(10, L' ');
+
+	std::vector<int>   selected_id;
+	selected_id.reserve(10);
 
 	while (konsole->is_open()) {
 
@@ -185,15 +240,17 @@ int game(int W, int H, int fw, int fh, int background_color = color::Blue) {
 		KA_MAKE_FPS(timer);
 		KA_MAKE_DALTA_TIME(1.f);
 
-		PRINT_TITLE(L"%s fps[%4.2f][%1.4f] Event[%d] NumberObj[%d]", 
-			APP_TITLE, ka_fps, ka_Dt, count, vec.size());
+		PRINT_TITLE(L"%s fps[%4.2f][%1.4f] Event[%d] NumberObj[%d] comment[%s]", 
+			APP_TITLE, ka_fps, ka_Dt, count, vec.size(), comment.c_str());
 
 		while (konsole->pull_event()) {
 			++count;
 			mouse = geom2d::as<float>(konsole->get_mouseXY());
 			imouse = mouse.as<int>();
+			// affich key clicked
 			key = konsole->get_AsciiKey();
 
+			// affich string affor any space clicked
 			if (konsole->key_released())
 			strword.push_back(key);
 
@@ -205,37 +262,53 @@ int game(int W, int H, int fw, int fh, int background_color = color::Blue) {
 		}
 
 		// Using Control CRTL ^
-
 		if (KeyPressed(VK_CONTROL))
 		{
 			if (KeyReleased(_u('T')))
 			{
 				_INVERT(option["Time"].action);
+				_DISPLAY_COMMENT(Time);
 			}
 
 			if (KeyReleased(_u('D')))
 			{
 				_INVERT(option["Date"].action);
+				_DISPLAY_COMMENT(Date);
 			}
 
 			if (KeyReleased(_u('C')))
 			{
 				_INVERT(option["Cursor"].action);
+				_DISPLAY_COMMENT(Cursor);
 			}
 
 			if (KeyReleased(_u('K')))
 			{
 				_INVERT(option["Keyboard"].action);
+				_DISPLAY_COMMENT(Keyboard);
 			}
 
 			if (KeyReleased(_u('P')))
 			{
 				_INVERT(option["Type"].action);
+				_DISPLAY_COMMENT(Type);
 			}
 
 			if (KeyReleased(_u('R')))
 			{
 				_INVERT(option["Draw"].action);
+				_DISPLAY_COMMENT(Draw);
+			}
+
+			if (KeyReleased(_u('O')))
+			{
+				vec.clear();
+			}
+
+			if (KeyReleased(_u('E')))
+			{
+				_INVERT(option["Delete"].action);
+				_DISPLAY_COMMENT(Delete);
 			}
 		}
 
@@ -289,22 +362,41 @@ int game(int W, int H, int fw, int fh, int background_color = color::Blue) {
 
 			if (KeyReleased(_u('C'))) {
 				_INVERT(option["Collision"].action);
+				_DISPLAY_COMMENT(Collision);
 			}
 
 			if (KeyReleased(_u('S'))) {
 				_INVERT(option["Select"].action);
+				_DISPLAY_COMMENT(Select);
 			}
 
 			// TODO selection of boxes
 			if (option["Select"].action) {
+
+				selected_id.clear();
+
 				for (auto it = vec.begin(); it != vec.end(); ++it) {
 					if (it->get_bounds().contain(mouse))
 					{
 						it->color_bg(color::GrayDark);
 						_id = it->get_id();
-						break;
+						selected_id.push_back(_id);
+						//break; 
+						// delete mode
+						if (option["Delete"].action)
+						{
+							if (KeyReleased(VK_RBUTTON))
+							{
+								it = vec.erase(it);
+								if (vec.empty()) break;
+
+								if (it != vec.begin() || vec.size() > 1 )
+								--it;
+							}
+						}
 					}
-					else {
+					else 
+					{
 						it->color_bg(background_color);
 						_id = 0;
 					}
@@ -337,11 +429,13 @@ int game(int W, int H, int fw, int fh, int background_color = color::Blue) {
 			swprintf_s(strP2.data(), 7, L"%3d|%2d", p2.x, p2.y);
 		}
 
+
 		// show id of boxes selected
 		std::wstring str_id(2, L' ');
 		if (option["Select"].action)
 		{
-			str_id = L"Id[" + _tow(_id) + L"]";
+			//str_id = L"Id[" + _tow(_id) + L"]";
+			show_selected_vector(selected_id, str_id);
 		}
 
 		// State Statu bar 
@@ -372,13 +466,15 @@ int game(int W, int H, int fw, int fh, int background_color = color::Blue) {
 			.set_colorChar(color::Red)
 			.set_color_select(color::GrayDark)
 			.set_step(1)
-			.add_item(L"D^raw", 0, option["Draw"].action, 1,2)
-			.add_item(L"Select", 0, option["Select"].action)
+			.add_item(L"D^raw",   0,	option["Draw"].action,		1,	2)
+			.add_item(L"^OClear", 0,	false,						0,	2)
+			.add_item(L"D^Elete", 0,	option["Delete"].action,	1,	2)
+			.add_item(L"Select",  0,	option["Select"].action)
 			.add_item(L"Add")
 			.add_item(L"Collision", 0 , option["Collision"].action)
 			.add_item(strP1, 0, false, 3)
 			.add_item(strP2, 0, false, 3)
-			.add_item(str_id, 0, false,1,4)
+			.add_item(str_id, 0, false,0,0)
 		.get());
 
 		// Option Statu bar
@@ -397,7 +493,7 @@ int game(int W, int H, int fw, int fh, int background_color = color::Blue) {
 
 		for (const auto& s : vec) s.draw();
 
-		if (option["Draw"].action)
+		if (option["Draw"].action || option["Select"].action)
 			Draw::border_box(console::Hborder, p1, pp2, color::White, background_color);
 
 
