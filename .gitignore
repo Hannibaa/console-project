@@ -366,3 +366,4 @@ FodyWeavers.xsd
 /console project.vcxproj.filters
 /intermediate
 /console project.sln
+/build/x64/debug/console project.exe
