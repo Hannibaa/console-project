@@ -52,4 +52,17 @@ namespace physic {
 
 	}
 
+
+	// using iterators for every container
+	template<typename Movables>
+	void collision_process(Movables& vm)
+	{
+		for (auto ait = vm.begin(); ait != vm.end() ; ++ait)
+			for(auto bit = std::next(ait); bit != vm.end() ; ++ bit)
+				if (is_collid(*ait, *bit))
+				{
+					collision_process(*ait, *bit);
+				}
+	}
+
 }
