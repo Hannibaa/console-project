@@ -76,7 +76,7 @@ namespace console{
             for (auto& e : *this)
             {
                 e.Char = _str[i++];
-                e.Attributes = COLOR::BG_BLACK | COLOR::FG_WHITE;
+                e.Attributes = _color_fg | _color_bg << 4; //COLOR::BG_BLACK | COLOR::FG_WHITE;
             }
         }
 
@@ -90,7 +90,7 @@ namespace console{
             for (const auto& c : _str) {
                 value_type e{};
                 e.Char = c;
-                e.Attributes = COLOR::BG_BLACK | COLOR::FG_WHITE;
+                e.Attributes = _color_fg | _color_bg << 4; //COLOR::BG_BLACK | COLOR::FG_WHITE;
                 this->push_back(e);
             }
         }
@@ -130,14 +130,14 @@ namespace console{
         void color_fg(T colorfg) {
             _color_fg = static_cast<int>(colorfg);
             for (auto& e : *this)
-                e.Attributes = _color_fg | _color_bg;
+                e.Attributes = _color_fg | _color_bg << 4;
         }
 
         template<typename T>
         void color_bg(T colorbg) {
-            _color_bg = static_cast<int>(colorbg) << 4;
+            _color_bg = static_cast<int>(colorbg);
             for (auto& e : *this)
-                e.Attributes = _color_fg | _color_bg;
+                e.Attributes = _color_fg | _color_bg << 4;
         }
 
 

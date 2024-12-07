@@ -1,6 +1,5 @@
 #pragma once
 #include <include/geometry/rectangle.hpp>
-#include <include/Macros.hpp>
 
 
 
