@@ -1,30 +1,52 @@
-/*				    Creation mode of box 
+/*				    Box Movement Demo
+*					Author :	Kadda Aoues
+*					Name :		Box Movement Demo
+*					Discription :
+*					Date :		11 / 10 / 2024
+* 
 					Enum : Mode { Creation, Selection, ... }
 						 : One Box creation methode
-					TODO : full option box movement and creation methode.
+					TODO :
+					------
+
+					1. fix option issur by new methode of statu bar and options 
+					2. add new box creation 
+					3. modifing box shape
+					4. add colors and glyphs, name
+					5. add palette to chose colors
 */
 #pragma once
 #include <vector>
 #include <map>
 #include <include/console/ka_utility.hpp>
-#include <include/component/ka_ImageString.hpp>
+#include <include/component/ka_SpriteString.hpp>
 #include <include/component/ka_SString.hpp>
-#include <include/component/TextUI/ka_StatuBar.hpp>
+#include <include/component/TextUI/StatuBar/ka_StatusBar2.hpp>
 #include <include/component/Physics/ka_Physics.hpp>
 #include <include/component/ka_Draw.hpp>
 #include <include/component/Physics/ka_FreeMove.hpp>
 #include <include/component/Physics/ka_ControlMove.hpp>
 #include <include/component/Physics/ka_Parametric_coord.hpp>
 #include <include/component/Physics/ka_Jump.hpp>
+#include <include/component/Physics/ka_ContinusMove.hpp>
+#include <include/component/TextUI/Palette/ka_Palette16.hpp>
 
 #define _tow(val)			std::to_wstring(val)
 
-using Sprite = wstringImg;
+#define _DISPLAY_COMMENT(option_name)	display_comment(bControl,option[#option_name], comment)
+
+#define _INVERT_OPTION(option_name)		option[#option_name].action = ! option[#option_name].action
+
+#define _INVERT(bvalue)					bvalue = !bvalue
+
+
+using Sprite = console::SpriteString<wchar_t>;
 using vecSprite = std::vector<Sprite>;
+
 using strButton = WSString;
 using vecString = std::vector<std::wstring>;
 
-using MapBool = std::map<std::string, bool>;
+//using MapBool = std::map<std::string, bool>;
 
 using IMove = physic::MoveInterface0;
 
@@ -70,20 +92,22 @@ void all_false(bool** option, int number_option) {
 	for (int i = 0; i < number_option; ++i) *option[i] = false;
 }
 
-void all_false(MapBool& option) {
-	for (auto& pair : option) pair.second = false;
+void all_false(TextUI::mapOption<wchar_t>& options,const std::vector<std::string>& str_options)
+{
+	for (const auto str : str_options)
+		if (options.contains(str)) options[str].action = false;
 }
-
-class BoxBorder;
-class BoxWBorder;
-
 
 int game(int W, int H, int fw, int fh, int background_color = color::Blue) {
 
-	int level = 3;
+	const int level = 3;
+	int		  bg_color{ background_color };
+	const wchar_t* APP_NAME = L"Box Movement Test";
+	const float speed_60 = 0.01667f;
+	const fVec2 v60(0.5, 0.5);
+
 	konsole->construct_console(W, H, fw, fh);
 	konsole->set_background_color(background_color << 4);
-
 	konsole->set_drawWindows(0.f, 0.f, W, H - level);
 
 	// set windows console static
@@ -91,41 +115,61 @@ int game(int W, int H, int fw, int fh, int background_color = color::Blue) {
 	// set window console position
 	win::move_console_window(50, 50);
 
-	const int Max_Option = 15;
-	bool* option[Max_Option] = { false };
+	/// -------------------------------- Option ----------------------------------------
+	TextUI::mapOption<wchar_t>	option;
+	std::vector<std::string>	strMovementOptions;
+	std::wstring				comment;
 
-	// data here : 
+#define  MoveOptions(name,comment)		option[#name]		= { false, L#comment};\
+										strMovementOptions.push_back(#name)
+
+	option["Move"]		= { false, L"Enable Movement"};
+	option["Display"]	= { false, L"Display sprite string drawing"};
+	MoveOptions(Control,		Using arraw to control movement);
+	MoveOptions(Jump,			Jumping movement);
+	MoveOptions(Parametric,		Parametric definition movement);
+	MoveOptions(Free,			Free straight move);
+	MoveOptions(Falldown,		Free fall movement);
+	MoveOptions(Move2points,	Moving between two points redefined);
+	MoveOptions(MoveAB,			Move particule from A to B);
+	MoveOptions(Continus,		Continus movement of particule);
+
+	option["Get2Point"]			= { false, L"Get two point by mouse with Ctrl + LButton"};
+	option["Palette"]			= { false, L"Display color palette"};
+
+	/// -------------------------------- End Option ----------------------------------------
+
+
+	// --------------------------------- data here --------------------------------------
 	auto str_box = make_box_string(1, 1, console::Hborder);
 
-	const int color_box_fg = background_color;
-	const int color_box_bg = color::Red;
+	const int color_box_bg = background_color;
+	int color_box_fg = color::Red;
 
-	Sprite  sprite(str_box._str,color_box_bg, color_box_fg);
+	Sprite  sprite(str_box._str,color_box_fg, color_box_bg);
 
 	sprite.set_size(str_box._lx, str_box._ly);
 	sprite.set_position(100.f, 10.f);
+	sprite.color_bg(color_box_bg);
+	sprite.color_fg(color_box_fg);
 	
-	// Bullet
-	// /xfb7(6)=(B)
-#define  _L  0x2588
-#define  _LB 0x2501
-	Sprite  bullet(std::wstring(2, _LB), color::Black, background_color);
+	// Palette Object 
+	TextUI::Palette16 palette(100, 5);
 
-	bullet.set_size(3, 1);
-	bullet.set_position(60, 10);
+	// --------------------------------- End Data --------------------------------------
 
 
 	//////////////////////////////////////// Cinematics /////////////////////
 	IMove* movement = nullptr;
 
 	auto drawWindow = iRect{ 0,0 ,W, H - level }.as<float>();
-
+	// controlling object by arrow key //////////////////////
 	physic::ControlMove<Sprite> control;
-	control.set_velocity(0.6f, 0.6f);
+	control.set_velocity(v60);
 	control.set_space(drawWindow);
-
+	// free move in box /////////////////////////////////////
 	physic::FreeMove0<Sprite> freemove;
-	freemove.set_velocity(0.5f, 0.5f);
+	freemove.set_velocity(v60);
 	freemove.set_space(drawWindow);
 
 	auto X = [](float x) {float a = 70.f; float b = 15.f;
@@ -138,67 +182,28 @@ int game(int W, int H, int fw, int fh, int background_color = color::Blue) {
 	auto Ye = [&sprite](float x) {float g = 9.8f, v0 = 0.001f, y_ground = sprite.get_position().y;
 		 return 0.5f * g * x * x - v0 * x + y_ground; };
 
+	// parametrical move ///////////////////////////////////
 	physic::ParaMove<Sprite> paramove(X,Y);
-	paramove.set_speed(0.001);
+	paramove.set_speed(0.01667);
 	paramove.set_space(drawWindow);
-
-	physic::Jump<Sprite>   jump(20.f, 0.7f);
-
+	// Jumping //////////////////////////////////////////////
+	physic::Jump<Sprite>   jump;
 	jump.set_velocity(0.6f, 0.7f);
 	jump.set_space(drawWindow);
-
+	// Moving between two points ////////////////////////////
 	physic::Move2p<Sprite>   move2p;
-
 	move2p.set_space(drawWindow);
 	move2p.set_velocity(0.01f, 0.01f);
 	move2p.set_2points({ 1.f, 1.f }, { 100.f, 30.f });
-
-
-	physic::PointMove<Sprite> move2points;
-
+	// following mouse technic //////////////////////////////
+	physic::MoveAB<Sprite> move2points;
 	move2points.set_period(1.0f);
-	move2points.set_speed(0.01f);
-	
-
-
-	////////////////////////////////////////////////////////////////////////////
-	// statu bars
-	vecString vButtons = TextUI::strVectorBuilder{}
-		.add(L"A Visual String")
-		.add(L"S Selection")
-		.add(L"C Control Move")
-		.add(L"F Free Move")
-		.add(L"N New Box")
-		.add(L"J Jump Move")
-		.add(L"P Param Move")
-		.get();
-
-	/// Number of option inferior of Max_Option
-	int number_option = 8;
-
-	bool option_visual_string = false;
-	std::wstring _stat[2] = { L"Disable", L"Enable" };
-
-	bool option_selection_enable = false; 
-
-	/// Moving logic bool
-	bool option_move = false;			  
-	bool option_control = false;		  option[0] = &option_control;
-	bool option_free = false;			  option[1] = &option_free;
-	bool option_parametric = false;		  option[2] = &option_parametric;
-	bool option_jump = false;			  option[3] = &option_jump;
-	bool option_straight = false;		  option[4] = &option_straight;
-	bool option_after_mouse = false;	  option[5] = &option_after_mouse;
-	bool option_freefall = false;		  option[6] = &option_after_mouse;
-	bool option_move2point = false;		  option[7] = &option_move2point;
-
-	bool is_get_2point = false;
-
-	bool option_2coord_points = false;  
-	std::wstring _str_2coord[2] = { L"Coord Disable", L"Get 2 Coordinate Points" };
-	fVec2  pt1{}, pt2{};
-	bool _b2points = false;
-
+	move2points.set_speed(0.08f);
+	// Continus movement controled by arrow direction ///////
+	physic::ContinusMove<Sprite>	continus;
+	continus.set_velocity(0.5f, 0.5f);
+	continus.set_sequeezKey('X');
+	continus.noreturn(true);
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// 
@@ -206,60 +211,110 @@ int game(int W, int H, int fw, int fh, int background_color = color::Blue) {
 	// 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
-	Time::Game_Timer timer;
+	Time::Game_Timer timer, Seconds;
 	fVec2			 mouse;
+	int				 ground{};
 
 	while (konsole->is_open()) {
 
 		konsole->clear();
 
-		// primitive parameter of konsole
+		// primitive parameter of konsole 1 step every frame 60/s
 		KA_MAKE_FPS(timer);
 		KA_MAKE_DALTA_TIME(1.f);
 
-		PRINT_TITLE(L"Random Box fps[%4.2f][%1.4f]", ka_fps, ka_Dt);
-
+		PRINT_TITLE(L"-- %s -- fps[%4.2f][%1.4f] Seconds[%d]"
+			,APP_NAME, ka_fps, ka_Dt, (int) Seconds.get_elapsed_time() );
 		while (konsole->pull_event()) {
 			mouse = geom2d::as<float>(konsole->get_mouseXY());
 		}
 
 		if (KeyReleased(_u('A')))
 		{
-			// implemetation for A option
-			option_visual_string = !option_visual_string;
+			_INVERT_OPTION(Display);
 		}
 
 		if (KeyReleased(_u('M'))) {
-			// implementation for D option
-			option_move = !option_move;
+			_INVERT_OPTION(Move);
 		}
 
-		if (KeyReleased(_u('C'))) {
-			all_false(option, number_option);
-			option_control = true;
+		if (KeyReleased(_u('L')))
+		{
+			_INVERT_OPTION(Palette);
+		}
 
+		////////////////////////////////////////// Movement //////////////////
+#define ONLY_OPTION(name_option)			all_false(option, strMovementOptions);\
+											option[#name_option].action = true;
+
+		if (KeyReleased(_u('C'))) {
+			ONLY_OPTION(Control);
 			movement = &control;
 		}
 
 		if (KeyReleased(_u('F'))) {
-			all_false(option, number_option);
-			option_free = true;
-
+			ONLY_OPTION(Free);
 			movement = &freemove;
 		}
 
-		if (KeyReleased(_u('P'))) {
-			all_false(option, number_option);
-			option_parametric = true;
+		if (KeyReleased(_u('H'))) {
+			ONLY_OPTION(Falldown);
 			paramove.reset();
-			paramove.set_functions(X, Y);
+			paramove.set_functions(Xe, Ye);
+			paramove.set_speed(0.003f);
 			movement = &paramove;
 		}
 
-		if (KeyReleased(_u('S'))) {
-			// implementation for S
-			option_selection_enable = !option_selection_enable;
+		if (KeyReleased(_u('P'))) {
+			ONLY_OPTION(Parametric);
+			paramove.reset();
+			Seconds.reset();
+			paramove.set_functions(X, Y);
+			movement = &paramove;
 		}
+		
+		if (KeyReleased(_u('J'))) {
+			ONLY_OPTION(Jump);
+			ground = sprite.get_position().y ;
+			jump.set_ground(ground);
+			movement = &jump;
+		}
+		if (option["Jump"].action)
+		{
+			Draw::hdraw(0, ground + sprite.get_dimension().y - 1,
+				L'_', W, color::Red, background_color << 4);
+		}
+
+
+		if (KeyReleased(_u('T'))) {
+			ONLY_OPTION(Move2points);
+			move2p.set_2points( sprite.get_position(),mouse);
+			movement = &move2p;
+		}
+
+		if (KeyReleased(_u('W'))) {
+			move2points.reset();
+			Seconds.reset();
+			move2points.set_point_0(sprite.get_position());
+			move2points.set_point_1(mouse);
+
+			ONLY_OPTION(MoveAB);
+			movement = &move2points;
+		}
+
+		if (option["MoveAB"].action)
+		{
+			move2points.set_point_0(sprite.get_position());
+			move2points.set_point_1(mouse);
+			move2points.reset();
+		}
+
+		if (KeyReleased(_u('Z'))) {
+			ONLY_OPTION(Continus);
+			movement = &continus;
+		}
+
+		////////////////////////////////////////// End Movement //////////////////
 
 		if (KeyReleased(_u('N'))) {
 			//
@@ -268,164 +323,81 @@ int game(int W, int H, int fw, int fh, int background_color = color::Blue) {
 			sprite.set_size(str_box._lx, str_box._ly);
 		}
 
-		if (KeyReleased(_u('J'))) {
-			all_false(option, number_option);
-			option_jump = true;
-
-			movement = &jump;
-		}
-
-		if (KeyReleased(_u('G'))) {
-			// get two coordinate points
-			option_2coord_points = !option_2coord_points;
-		}
-
-		if (KeyReleased(_u('T'))) {
-			// straight between two point pt1 to pt2
-			all_false(option, number_option);
-
-			option_straight = true;
-			movement = &move2p;
-		}
-
-		if (KeyReleased(_u('W'))) {
-			all_false(option, number_option);
-			move2points.reset();
-			move2points.set_point_0(sprite.get_position());
-			option_after_mouse = true;
-		}
-
-		if (KeyReleased(_u('V'))) {
-			if (option_straight)
-			move2p.set_2points(pt1, pt2);
-		}
-
-		if (KeyReleased(_u('H'))) {
-			all_false(option, number_option);
-			option_freefall = true;
-			paramove.reset();
-			paramove.set_functions(Xe, Ye);
-			movement = &paramove;
-		}
-
-
-		if (option_after_mouse)
-		{
-			if (KeyReleased(VK_LBUTTON)) {
-				pt2 = mouse;
-				move2points.set_point_1(pt2);
-				is_get_2point = true;
-			}
-
-			if( is_get_2point )
-			movement = &move2points;
-
-			if ((sprite.get_position() - pt2).Norm() < 2.5)
-			{
-				move2points.set_point_0(pt2);
-				is_get_2point = false;
-				move2points.reset();
-			}
-		}
-		
-		if (option_2coord_points) {
-			if (KeyPressed(VK_CONTROL))
-				if (KeyReleased(VK_LBUTTON))
-				{
-					if (!_b2points)
-					{
-						pt1 = mouse;
-						_b2points = true;
-					}
-					else
-					{
-						pt2 = mouse;
-						option_2coord_points = false;
-						_b2points = false;
-					}
-				}
-		}
-
-		if (option_visual_string) {
-			Draw::draw_str(10, 10, str_box._str, color::Red, color::Black);
-			Draw::draw_str(0, 0,L"pt1 : " + _tow(int(pt1.x)) + L"|" + _tow(int(pt1.y)),
-				color::White, background_color);
-			Draw::draw_str(0, 1,L"pt2 : " + _tow(int(pt2.x)) + L"|" + _tow(int(pt2.y)),
-				color::White, background_color);
-		}
-
-		if (option_selection_enable) {
-
-			if (sprite.get_bounds().contain(mouse))
-			{
-				sprite.color_bg(color::YellowLight);
-
-				if (KeyPressed(VK_LBUTTON))
-				{
-					sprite.set_position(mouse);
-				}
-			}
-			else
-				sprite.color_bg(color_box_bg);
-
-		}
-
 		// Moving 
-		if (option_move) {
+		if (option["Move"].action) {
 			if (movement)
 			movement->move(&sprite, ka_Dt);
 		}
-
-		if (option_jump)
-		{
-			Draw::hdraw(0, jump.get_ground() + sprite.get_dimension().y - 1,
-				L'_', W, color::Red, background_color << 4);
-		}
-		
 		 
 		auto Ps = sprite.get_position().as<int>();
+		std::wstring strPs(7, L' ');
+		std::wstring cursor(7, L' ');
+		swprintf_s(cursor.data(), 8, L"%3d|%2d", int(mouse.x), int(mouse.y));
+		swprintf_s(strPs.data(), 7, L"%3d|%2d", Ps.x, Ps.y);
+		
 
-		TextUI::StatuBar(vButtons);
-
-		TextUI::StatuBar(TextUI::StatuBarBuilder{}
-			.set_position(0,H - level + 1)
-			.set_colorBG(color::GrayDark)
+		// First Statu Bar
+		TextUI::statu_bar(TextUI::StatuBarBuilder{}
+			.set_position(0, H - level)
+			.set_colorBG(color::GrayLight)
 			.set_colorFG(color::Black)
-			.set_colorbg_string(color::GrayLight)
 			.set_colorChar(color::Red)
+			.set_colorbg_string(color::YellowLight)
+			.set_color_select(color::GrayDark)
 			.set_step(1)
-			.add_item(L"G Get 2Points")
-			.add_item(L"T Move 2Points")
-			.add_item(L"V Select New 2Points")
-			.add_item(L"H Free Fall")
-			.add_item(L"W Mouse 2Point")
-			.add_item(L"B Bullet")
-			.get()
+			.add_item(cursor	,W - 7	,false	,3)
+			.add_item(L"Sprite[" + strPs + L"]", W - 22, false, 10)
+		.get()
 		);
 
-		TextUI::StatuBar(TextUI::StatuBarBuilder{}
-			.set_position(0, H - level)
-			.set_colorBG(color::Yellow)
+		// Second Statu Bar
+		TextUI::statu_bar(TextUI::StatuBarBuilder{}
+			.set_position(0, H - level + 1)
+			.set_colorBG(color::GrayLight)
+			.set_colorFG(color::Black)
+			.set_colorChar(color::Red)
+			.set_colorbg_string(color::YellowLight)
+			.set_color_select(color::GrayDark)
+			.set_step(1)
+			.add_item(L"A Display"	,0	, option["Display"].action	,0,2)
+			.add_item(L"Move"		,0	, option["Move"].action			)
+			.add_item(L"Palette"	,0	, option["Palette"].action		)
+		.get()
+		);
+
+		// Third Statu Bar 
+		// Time , Date, Mouse Coordinate, Option status.
+		TextUI::statu_bar(TextUI::StatuBarBuilder{}
+			.set_position(0, H - level + 2)
+			.set_colorBG(color::Black)
 			.set_colorFG(color::White)
 			.set_colorChar(color::Red)
-			.set_colorbg_string(color::BlueLight)
-			.set_step(2)
-			.add_item(L"Esc Close")
-			.add_item(L"Visual[" + _stat[option_visual_string] + L"]")
-			.add_item(L"Select[" + _stat[option_selection_enable] + L"]")
-			.add_item(L"Move[" + _stat[option_move] + L"]")
-			.add_item(L"Control[" + _stat[option_control] + L"]")
-			.add_item(L"Free[" + _stat[option_free] + L"]")
-			.add_item(L"Para[" + _stat[option_parametric] + L"]")
-			.add_item(L"Jump[" + _stat[option_jump] + L"]")
-			.add_item(L"X[" + _tow(Ps.x) + L"]")
-			.add_item(L"Y[" + _tow(Ps.y) + L"]")
-			.add_item(_str_2coord[option_2coord_points])
-			.get());
+			.set_colorbg_string(color::YellowLight)
+			.set_color_select(color::White)
+			.set_color_selectFG(color::Black)
+			.set_step(1)
+			.add_item(L"Control"		,0	, option["Control"].action)
+			.add_item(L"Jump"			,0	, option["Jump"].action)
+			.add_item(L"Free"			,0	, option["Free"].action)
+			.add_item(L"Parametric"		,0	, option["Parametric"].action)
+			.add_item(L"H Fall"			,0	, option["Falldown"].action)
+			.add_item(L"T Move2p"		,0	, option["Move2points"].action)
+			.add_item(L"W FollowMouse"	,0	, option["MoveAB"].action)
+			.add_item(L"Z ContinusMove"	,0	, option["Continus"].action)
+		.get()
+		);
 
+		
 		// draw objects
 		sprite.draw();
-		bullet.draw();
+
+		if (option["Palette"].action)
+		{
+			palette.draw();
+			palette.select_color(color_box_fg,mouse.as<int>(), option["Palette"].action);
+			sprite.color_fg(color_box_fg);
+			sprite.color_bg(color_box_fg);
+		}
 
 		konsole->display();
 	}
