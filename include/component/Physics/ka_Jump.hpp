@@ -17,12 +17,6 @@ namespace physic {
 		float		_ground;
 
 	public:
-		Jump(float ground, float speed)
-			: _ground(ground)
-		{
-			_velocity.y = speed;
-		}
-
 		void set_ground(float g) {
 			_ground = g;
 		}

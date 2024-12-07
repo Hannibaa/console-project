@@ -44,6 +44,10 @@ namespace physic {
 			_t = t0;
 		}
 
+		float get_step() const {
+			return _t;
+		}
+
 		void set_speed(float speed) {
 			_speed = speed;
 		}
@@ -80,7 +84,7 @@ namespace physic {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	template<typename Movable>
-	class PointMove : public MoveInterface0
+	class MoveAB : public MoveInterface0
 	{
 		float _Period;
 		float _speed;
@@ -108,20 +112,20 @@ namespace physic {
 			_Period = period;
 		}
 
-		void update_velocity() {
-			_velocity.x = (_B.x - _A.x) / _Period;
-			_velocity.y = (_B.y - _A.y) / _Period;
-		}
 
 		void reset(float t0 = 0.f) {
 			_t = t0;
 		}
 
-		void move(void* ptr, float Dt) override {
-			update_velocity();
-			_t += _speed * Dt;
+		float get_step() const {
+			return _t;
+		}
 
-			fVec2 p = _A + _t * _velocity;
+		void move(void* ptr, float Dt) override {
+			_t += _speed * Dt;
+			math::clamp(_t, 0.f, 1.f);
+			
+			fVec2 p = _A + _t * (_B - _A);
 			static_cast<Movable*>(ptr)->set_position(p);
 		}
 	};
