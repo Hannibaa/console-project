@@ -1,8 +1,9 @@
 //				this file for execution game() function 
 
 #include <iostream>
-#include <project/RandomBox/random_box.hpp>
-
+//#include <project/RandomBox/random_box.hpp>
+#include <project/RandomBox/box_movement.hpp>
+//#include <project/TextEditor/status_bar_test.hpp>
 
 int main() {
 
