@@ -167,7 +167,7 @@ namespace console {
             , hConsoleIn{ GetStdHandle(STD_INPUT_HANDLE) }
             , m_bg_color(COLOUR::BG_BLACK)
             , m_bOpen{ true }
-            , m_Ascii_close_char(_CTRL_C)
+            , m_Ascii_close_char(KA_CTRL_C)
             , m_vkey(VK_ESCAPE)
             , m_fontw(14)
             , m_fonth(8)
@@ -473,6 +473,7 @@ namespace console {
             }
             else {
                 m_KeyEvent = false;
+                m_MouseEvent = false;
                 m_MouseMove = false;
                 m_KeyReleased = false;
                 m_KeyPressed = false;
@@ -483,6 +484,7 @@ namespace console {
                 switch (irb[i].EventType)
                 {
                 case MOUSE_EVENT:
+                    m_MouseEvent = true;
                     m_MouseX = irb[i].Event.MouseEvent.dwMousePosition.X;
                     m_MouseY = irb[i].Event.MouseEvent.dwMousePosition.Y;
                     m_MouseMove = irb[i].Event.MouseEvent.dwEventFlags == MOUSE_MOVED;
@@ -532,6 +534,7 @@ namespace console {
         int                m_MouseX;
         int                m_MouseY;
         bool               m_KeyEvent{ false };
+        bool               m_MouseEvent{ false };
         bool               m_MouseMove{false};
         bool               m_KeyReleased{ false };
         bool               m_KeyPressed{ false };
