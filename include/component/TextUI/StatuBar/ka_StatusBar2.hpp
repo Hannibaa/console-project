@@ -13,6 +13,20 @@
 
 namespace TextUI {
 
+	// usefull type
+	template<typename Tchar>
+	struct sOption
+	{
+		bool						action;
+		std::basic_string<Tchar>	comment;
+	};
+
+	using wsOption = sOption<wchar_t>;
+	using ssOption = sOption<char>;
+
+	template<typename Tchar>
+	using mapOption = std::map<std::string, sOption<Tchar>>;
+
 	using vItems = std::vector<SBItem>;
 	
 	struct sStatuBar2 {
@@ -25,6 +39,7 @@ namespace TextUI {
 		int color_fg;
 		int color_bg;
 		int color_sel;
+		int color_sel_fg;
 		int color_char;
 		int color_string_bg;
 
@@ -83,6 +98,12 @@ namespace TextUI {
 
 		StatuBarBuilder& set_color_select(int col) {
 			_statuBar.color_sel = col;
+			_statuBar.color_sel_fg = _statuBar.color_fg;
+			return *this;
+		}
+
+		StatuBarBuilder& set_color_selectFG(int col) {
+			_statuBar.color_sel_fg = col;
 			return *this;
 		}
 
@@ -106,15 +127,16 @@ namespace TextUI {
 		StatuBarBuilder& add_item(
 			const std::wstring text ,// Text to be displayed in statu bar
 			int position = 0,		 // at position in statu bar
-			bool _b = false,		 // 0 bg color, 1 bg color of selection
+			bool _b = false,		 // 0 bg and fg color, 1 bg and fg color of selection
 			int posChar = 0, 		 // position of first char to colored
 			int length = 1 			 // length of chars to be colored
 		) {
 			SBItem item;
-			int col[2] = { _statuBar.color_bg,_statuBar.color_sel };
+			int col_bg[2] = { _statuBar.color_bg,_statuBar.color_sel };
+			int col_fg[2] = { _statuBar.color_fg,_statuBar.color_sel_fg };
 			item._str = text;
-			item._color_bg = col[_b];
-			item._color_fg = _statuBar.color_fg;
+			item._color_bg = col_bg[_b];
+			item._color_fg = col_fg[_b];
 			item._posChar = posChar;
 			item._lenChar = length;
 			item._pos = position;
