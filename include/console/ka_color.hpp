@@ -1,28 +1,73 @@
 /* COLOR INFORAMTION FOR BOTH CONSOLE AND WINAPI */
 
 #pragma once
+#include <array>
+#include <string>
 
 
 namespace color {
 
         enum Color : uint8_t {
-            Black = 0,
-            Blue = 1,
-            Green = 2,
-            Cyan = 3,
-            Red = 4,
-            Magenta = 5,
-            Yellow = 6,
-            GrayLight = 7,
-            GrayDark = 8,
-            BlueLight = 9,
-            GreenLight = 10,
-            CyanLight = 11,
-            RedLight = 12,
-            MagentaLight = 13,
-            YellowLight = 14,
-            White = 15,
+            Black           = 0,
+            Blue            = 1,
+            Green           = 2,
+            Cyan            = 3,
+            Red             = 4,
+            Magenta         = 5,
+            Yellow          = 6,
+            GrayLight       = 7,
+            GrayDark        = 8,
+            BlueLight       = 9,
+            GreenLight      = 10,
+            CyanLight       = 11,
+            RedLight        = 12,
+            MagentaLight    = 13,
+            YellowLight     = 14,
+            White           = 15,
         };
+
+
+        const std::array<std::string, 16> Palette16 =
+        {
+            "Black"        ,
+            "Blue"        ,
+            "Green"        ,
+            "Cyan"        ,
+            "Red"        ,
+            "Magenta"        ,
+            "Yellow"        ,
+            "GrayLight"        ,
+            "GrayDark"        ,
+            "BlueLight"        ,
+            "GreenLight"        ,
+            "CyanLight"        ,
+            "RedLight"        ,
+            "MagentaLight"        ,
+            "YellowLight"        ,
+            "White"
+        };
+
+        const std::array<std::wstring, 16> wPalette16 =
+        {
+            L"Black"        ,
+            L"Blue"        ,
+            L"Green"        ,
+            L"Cyan"        ,
+            L"Red"        ,
+            L"Magenta"        ,
+            L"Yellow"        ,
+            L"GrayLight"        ,
+            L"GrayDark"        ,
+            L"BlueLight"        ,
+            L"GreenLight"        ,
+            L"CyanLight"        ,
+            L"RedLight"        ,
+            L"MagentaLight"        ,
+            L"YellowLight"        ,
+            L"White"
+        };
+
+
 
     //inline namespace escape {
 
