@@ -39,14 +39,6 @@
 #define _tow(val)			std::to_wstring(val)
 #define _INVERT(bvalue)		bvalue = !bvalue
 
-// structure for option
-struct Coption
-{
-	bool			action;
-	std::wstring	comment;
-};
-
-using Option = std::map<std::string, Coption>;
 
 // using as sprite for any drawing :
 using Sprite = console::SpriteString<wchar_t>;
@@ -122,7 +114,7 @@ Sprite make_box(const fVec2& p1, const fVec2& p2, int _col = 0) {
 	sp.set_string(make_box_string(lx, ly, console::Hborder));
 	sp.set_size(lx, ly);
 	sp.set_position(p1.x, p1.y);
-	sp.color_bg(konsole->get_background_color() >> 4);
+	sp.color_bg(konsole->get_background_color());
 	sp.color_fg(color::Red);
 	sp.set_id(++ID);
 
@@ -159,7 +151,7 @@ void show_selected_vector(const std::vector<T>& vec, std::wstring& wout)
 
 
 // Function : display comment of command or option 
-void display_comment(bool& bControl, Coption option, std::wstring& comment)
+void display_comment(bool& bControl, TextUI::wsOption option, std::wstring& comment)
 {
 	bControl = true;
 	if (bControl && option.action)
@@ -185,9 +177,10 @@ int game(int W, int H, int fw, int fh, int background_color = color::Blue) {
 	win::move_console_window(50, 50);
 
 	/// ------------------- 0. Option
-	bool				bControl{ false };
-	std::wstring		comment;
-	Option				option;
+	bool									bControl{ false };
+	std::wstring							comment;
+	TextUI::mapOption<wchar_t>				option;
+
 #define  _DISPLAY_COMMENT(option_name)	display_comment(bControl,option[#option_name], comment)
 
 	option["Time"]		= { false, L"show current time" };
