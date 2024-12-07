@@ -15,13 +15,13 @@ namespace Draw {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// Drawing string at coordinate x,y with color fg and bg :
-	void draw_str(int x, int y, const std::wstring wstr, int colorfg, int colorbg) {
+	void draw_str(int x, int y, const std::wstring& wstr, int colorfg, int colorbg) {
 		int i{};
 		for (const auto& c : wstr)
 			konsole->draw(x + (++i), y, c, colorfg | colorbg << 4);
 	}
 
-	void draw_strh(int x, int y, const std::wstring wstr, int colorfg, int colorbg) {
+	void draw_strh(int x, int y, const std::wstring& wstr, int colorfg, int colorbg) {
 		int i{};
 		for (const auto& c : wstr)
 			konsole->draw(x, y + (++i), c, colorfg | colorbg << 4);
